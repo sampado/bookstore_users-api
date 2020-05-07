@@ -3,6 +3,7 @@ package users
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sampado/bookstore_users-api/domain/users"
@@ -11,7 +12,18 @@ import (
 )
 
 func GetUser(c *gin.Context) {
-	c.String(http.StatusNotImplemented, "Implement me!")
+	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+	if userErr != nil {
+		err := errors.NewBadRequestError(userErr.Error())
+		c.JSON(err.Status, err)
+	}
+
+	user, getErr := services.GetUser(userId)
+	if getErr != nil {
+		c.JSON(getErr.Status, getErr)
+	}
+
+	c.JSON(http.StatusOK, user)
 }
 
 func CreateUser(c *gin.Context) {
@@ -44,13 +56,8 @@ func CreateUser(c *gin.Context) {
 
 	result, saveErr := services.CreateUser(&user)
 	if saveErr != nil {
-		error := errors.RestError{
-			Message: "Error: Unable create an User",
-			Status:  http.StatusInternalServerError,
-			Error:   http.StatusText(http.StatusInternalServerError),
-		}
-		fmt.Println(error)
-		c.JSON(http.StatusBadRequest, error)
+		fmt.Println(saveErr)
+		c.JSON(http.StatusBadRequest, saveErr)
 		return
 	}
 
