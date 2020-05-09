@@ -2,34 +2,74 @@ package users
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/sampado/bookstore_users-api/datasources/mysql/users_db"
+	dateutils "github.com/sampado/bookstore_users-api/utils/date_utils"
 	"github.com/sampado/bookstore_users-api/utils/errors"
+	mysqlutils "github.com/sampado/bookstore_users-api/utils/mysql"
 )
 
-var (
-	usersDB = make(map[int64]*User)
+const (
+	queryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?, ?, ?, ?)"
+	queryGetUser    = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id = ?;"
+	queryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=? WHERE id=?"
 )
 
 func (user *User) Get() *errors.RestError {
-	result := usersDB[user.Id]
-	if result == nil {
-		return errors.NewNotFoundError(fmt.Sprintf("user %d not found", user.Id))
+	stmt, err := users_db.Client.Prepare(queryGetUser)
+	if err != nil {
+		log.Println("error preparing the statement")
+		return errors.NewInternalServerError(err.Error())
 	}
+	defer stmt.Close() // this will be excecuted right before the function ends/ on any of the return statements
 
-	user.Id = result.Id
-	user.DataCreated = result.DataCreated
-	user.Email = result.Email
-	user.FirstName = result.FirstName
-	user.LastName = result.LastName
+	result := stmt.QueryRow(user.Id)
+	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DataCreated); err != nil {
+		return mysqlutils.ParseError(err)
+	}
 
 	return nil // no errors
 }
 
 func (user *User) Save() *errors.RestError {
-	if usersDB[user.Id] != nil {
-		return errors.NewBadRequestError(fmt.Sprintf("user %d already exits", user.Id))
+
+	stmt, err := users_db.Client.Prepare(queryInsertUser)
+	if err != nil {
+		log.Println("error preparing the statement")
+		return errors.NewInternalServerError(err.Error())
+	}
+	defer stmt.Close() // this will be excecuted right before the function ends/ on any of the return statements
+
+	user.DataCreated = dateutils.GetNowString()
+
+	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DataCreated)
+	if saveErr != nil {
+		return mysqlutils.ParseError(saveErr)
 	}
 
-	usersDB[user.Id] = user
+	userId, err := insertResult.LastInsertId()
+	if err != nil {
+		return errors.NewInternalServerError(
+			fmt.Sprintf("error when trying to get the last user ID: %s", err.Error()))
+	}
+
+	user.Id = userId
+
 	return nil // no error
+}
+
+func (user *User) Update() *errors.RestError {
+	stmt, err := users_db.Client.Prepare(queryUpdateUser)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.FirstName, user.LastName, user.Email, user.Id)
+	if err != nil {
+		return mysqlutils.ParseError(err)
+	}
+
+	return nil
 }
