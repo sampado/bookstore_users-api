@@ -11,14 +11,14 @@ import (
 	"github.com/sampado/bookstore_users-api/utils/errors"
 )
 
-func GetUser(c *gin.Context) {
-	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+func Get(c *gin.Context) {
+	userID, userErr := getUserID(c.Param("user_id"))
 	if userErr != nil {
-		err := errors.NewBadRequestError(userErr.Error())
-		c.JSON(err.Status, err)
+		c.JSON(userErr.Status, userErr)
+		return
 	}
 
-	user, getErr := services.GetUser(userId)
+	user, getErr := services.GetUser(userID)
 	if getErr != nil {
 		c.JSON(getErr.Status, getErr)
 	}
@@ -26,7 +26,7 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func CreateUser(c *gin.Context) {
+func Create(c *gin.Context) {
 	var user users.User
 
 	// long way
@@ -51,9 +51,6 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	fmt.Print("User")
-	fmt.Println(user)
-
 	result, saveErr := services.CreateUser(&user)
 	if saveErr != nil {
 		fmt.Println(saveErr)
@@ -64,11 +61,11 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, result)
 }
 
-func UpdateUser(c *gin.Context) {
-	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+func Update(c *gin.Context) {
+	userID, userErr := getUserID(c.Param("user_id"))
 	if userErr != nil {
-		err := errors.NewBadRequestError(userErr.Error())
-		c.JSON(err.Status, err)
+		c.JSON(userErr.Status, userErr)
+		return
 	}
 
 	var user users.User
@@ -78,7 +75,7 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	user.Id = userId
+	user.Id = userID
 
 	isPartial := c.Request.Method == http.MethodPatch
 	result, err := services.UpdateUser(isPartial, user)
@@ -90,6 +87,27 @@ func UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func SearchUser(c *gin.Context) {
-	c.String(http.StatusNotImplemented, "Implement me!")
+func Delete(c *gin.Context) {
+	userID, userErr := getUserID(c.Param("user_id"))
+	if userErr != nil {
+		c.JSON(userErr.Status, userErr)
+		return
+	}
+
+	if err := services.DeleteUser(userID); err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+func getUserID(userIdParam string) (int64, *errors.RestError) {
+	userID, userErr := strconv.ParseInt(userIdParam, 10, 64)
+	if userErr != nil {
+		err := errors.NewBadRequestError(userErr.Error())
+		return -1, err
+	}
+
+	return userID, nil
 }
