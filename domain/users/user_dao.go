@@ -5,16 +5,16 @@ import (
 	"log"
 
 	"github.com/sampado/bookstore_users-api/datasources/mysql/users_db"
-	dateutils "github.com/sampado/bookstore_users-api/utils/date_utils"
 	"github.com/sampado/bookstore_users-api/utils/errors"
 	mysqlutils "github.com/sampado/bookstore_users-api/utils/mysql"
 )
 
 const (
-	queryInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?, ?, ?, ?)"
-	queryGetUser    = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id = ?;"
-	queryUpdateUser = "UPDATE users SET first_name=?, last_name=?, email=? WHERE id=?"
-	queryDeleteUser = "DELETE FROM users WHERE id=?"
+	queryInsertUser       = "INSERT INTO users(first_name, last_name, email, date_created, password, status) VALUES(?, ?, ?, ?, ?, ?)"
+	queryGetUser          = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE id = ?;"
+	queryUpdateUser       = "UPDATE users SET first_name=?, last_name=?, email=? WHERE id=?"
+	queryDeleteUser       = "DELETE FROM users WHERE id=?"
+	queryFindUserByStatus = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE status = ?"
 )
 
 func (user *User) Get() *errors.RestError {
@@ -26,7 +26,7 @@ func (user *User) Get() *errors.RestError {
 	defer stmt.Close() // this will be excecuted right before the function ends/ on any of the return statements
 
 	result := stmt.QueryRow(user.Id)
-	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DataCreated); err != nil {
+	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status); err != nil {
 		return mysqlutils.ParseError(err)
 	}
 
@@ -42,9 +42,7 @@ func (user *User) Save() *errors.RestError {
 	}
 	defer stmt.Close() // this will be excecuted right before the function ends/ on any of the return statements
 
-	user.DataCreated = dateutils.GetNowString()
-
-	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DataCreated)
+	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated, user.Password, user.Status)
 	if saveErr != nil {
 		return mysqlutils.ParseError(saveErr)
 	}
@@ -88,4 +86,32 @@ func (user *User) Delete() *errors.RestError {
 	}
 
 	return nil
+}
+
+func (user *User) FindByStatus(status string) ([]User, *errors.RestError) {
+	stmt, err := users_db.Client.Prepare(queryFindUserByStatus)
+	if err != nil {
+		return nil, errors.NewInternalServerError(err.Error())
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(status)
+	if err != nil {
+		return nil, mysqlutils.ParseError(err)
+	}
+	defer rows.Close()
+	users := make([]User, 0)
+
+	for rows.Next() {
+		var user User = User{}
+		if err := rows.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status); err != nil {
+			return nil, mysqlutils.ParseError(err)
+		}
+		users = append(users, user)
+	}
+
+	if len(users) == 0 {
+		return nil, errors.NewNotFoundError(fmt.Sprintf("no users matching status %s", status))
+	}
+	return users, nil
 }

@@ -6,14 +6,18 @@ import (
 	"github.com/sampado/bookstore_users-api/utils/errors"
 )
 
+const (
+	StatusActive = "active"
+)
+
 type User struct {
 	Id          int64  `json:"id"`
 	FirstName   string `json:"firstName"`
 	LastName    string `json:"lastName"`
 	Email       string `json:"email"`
-	DataCreated string `json:"dataCreated"`
+	DateCreated string `json:"dataCreated"`
 	Status      string `json:"status"`
-	Password    string `json:"_"` // _ ignore when working with json
+	Password    string `json:"-"` // - ignore when working with json
 }
 
 func (user *User) Validate() *errors.RestError {
@@ -21,5 +25,11 @@ func (user *User) Validate() *errors.RestError {
 	if user.Email == "" {
 		return errors.NewBadRequestError("invalid email address")
 	}
+
+	user.Password = strings.TrimSpace(user.Password)
+	if user.Password == "" {
+		return errors.NewBadRequestError("invalid password")
+	}
+
 	return nil
 }

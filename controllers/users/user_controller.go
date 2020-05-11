@@ -51,7 +51,7 @@ func Create(c *gin.Context) {
 		return
 	}
 
-	result, saveErr := services.CreateUser(&user)
+	result, saveErr := services.CreateUser(user)
 	if saveErr != nil {
 		fmt.Println(saveErr)
 		c.JSON(http.StatusBadRequest, saveErr)
@@ -100,6 +100,22 @@ func Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+func Search(c *gin.Context) {
+	status, foundParam := c.GetQuery("status")
+	if !foundParam {
+		// define default value
+
+	}
+
+	users, err := services.FindUserByStatus(status)
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, users)
 }
 
 func getUserID(userIdParam string) (int64, *errors.RestError) {
