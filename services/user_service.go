@@ -2,12 +2,20 @@ package services
 
 import (
 	"github.com/sampado/bookstore_users-api/domain/users"
+	cryptoutils "github.com/sampado/bookstore_users-api/utils/crypto_utils"
 	dateutils "github.com/sampado/bookstore_users-api/utils/date_utils"
 	"github.com/sampado/bookstore_users-api/utils/errors"
 )
 
+var (
+	UsersService usersService = usersService{}
+)
+
+type usersService struct {
+}
+
 // GetUser is a service to get a user from the BBDD.
-func GetUser(userID int64) (*users.User, *errors.RestError) {
+func (s *usersService) GetUser(userID int64) (*users.User, *errors.RestError) {
 	user := &users.User{Id: userID}
 	err := user.Get()
 	if err != nil {
@@ -17,13 +25,15 @@ func GetUser(userID int64) (*users.User, *errors.RestError) {
 }
 
 // CreateUser is a service to create a user and persist it into the BBDD.
-func CreateUser(user users.User) (*users.User, *errors.RestError) {
+func (s *usersService) CreateUser(user users.User) (*users.User, *errors.RestError) {
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
 
 	user.DateCreated = dateutils.GetNowDBFormat()
 	user.Status = users.StatusActive
+	user.Password = cryptoutils.GetMd5(user.Password)
+
 	if err := user.Save(); err != nil {
 		return nil, err
 	}
@@ -32,8 +42,8 @@ func CreateUser(user users.User) (*users.User, *errors.RestError) {
 }
 
 // UpdateUser used to update an user in the BBDD
-func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestError) {
-	current, err := GetUser(user.Id)
+func (s *usersService) UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestError) {
+	current, err := s.GetUser(user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -66,13 +76,13 @@ func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestError
 }
 
 // DeleteUser is used to delete a given user
-func DeleteUser(userID int64) *errors.RestError {
+func (s *usersService) DeleteUser(userID int64) *errors.RestError {
 	user := &users.User{Id: userID}
 	return user.Delete()
 }
 
 // FindUserByStatus is used to find users
-func FindUserByStatus(status string) ([]users.User, *errors.RestError) {
+func (s *usersService) FindUserByStatus(status string) (users.Users, *errors.RestError) {
 	dao := &users.User{}
 	return dao.FindByStatus(status)
 }
