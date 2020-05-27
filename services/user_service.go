@@ -8,10 +8,19 @@ import (
 )
 
 var (
-	UsersService usersService = usersService{}
+	UsersService usersServiceInterface = &usersService{}
 )
 
 type usersService struct {
+}
+
+type usersServiceInterface interface {
+	GetUser(int64) (*users.User, *errors.RestError)
+	CreateUser(users.User) (*users.User, *errors.RestError)
+	UpdateUser(bool, users.User) (*users.User, *errors.RestError)
+	DeleteUser(int64) *errors.RestError
+	FindUserByStatus(string) (users.Users, *errors.RestError)
+	LoginUser(users.LoginRequest) (*users.User, *errors.RestError)
 }
 
 // GetUser is a service to get a user from the BBDD.
@@ -85,4 +94,17 @@ func (s *usersService) DeleteUser(userID int64) *errors.RestError {
 func (s *usersService) FindUserByStatus(status string) (users.Users, *errors.RestError) {
 	dao := &users.User{}
 	return dao.FindByStatus(status)
+}
+
+func (s *usersService) LoginUser(request users.LoginRequest) (*users.User, *errors.RestError) {
+	dao := &users.User{
+		Email:    request.Email,
+		Password: cryptoutils.GetMd5(request.Password),
+	}
+
+	if err := dao.FindByEmailAndPassword(); err != nil {
+		return nil, err
+	}
+
+	return dao, nil
 }

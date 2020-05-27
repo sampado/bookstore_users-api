@@ -21,6 +21,7 @@ func Get(c *gin.Context) {
 	user, getErr := services.UsersService.GetUser(userID)
 	if getErr != nil {
 		c.JSON(getErr.Status, getErr)
+		return
 	}
 
 	c.JSON(http.StatusOK, user.Marshall(c.GetHeader("X-Public") == "true"))
@@ -126,4 +127,21 @@ func getUserID(userIdParam string) (int64, *errors.RestError) {
 	}
 
 	return userID, nil
+}
+
+func Login(c *gin.Context) {
+	var request users.LoginRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		restErr := errors.NewBadRequestError(err.Error())
+		c.JSON(restErr.Status, restErr)
+		return
+	}
+
+	user, err := services.UsersService.LoginUser(request)
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, user.Marshall(c.GetHeader("X-Public") == "true"))
 }

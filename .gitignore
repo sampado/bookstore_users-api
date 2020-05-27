@@ -15,5 +15,9 @@ bookstore_users-api
 # local env
 setenv.sh
 
+# notes
+notes.md
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
+

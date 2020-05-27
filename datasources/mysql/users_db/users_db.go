@@ -3,8 +3,9 @@ package users_db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/sampado/bookstore_users-api/logger"
 
 	// _ imports the package no matter if it's being used here
 	_ "github.com/go-sql-driver/mysql"
@@ -47,5 +48,5 @@ func connect() {
 		panic(err)
 	}
 
-	log.Println("DB successfully configured")
+	logger.Info("DB successfully configured")
 }
