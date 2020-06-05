@@ -11,6 +11,7 @@ import (
 	"github.com/sampado/bookstore_users-api/domain/users"
 	"github.com/sampado/bookstore_users-api/services"
 	"github.com/sampado/bookstore_users-api/utils/errors"
+	_ "github.com/sampado/bookstore_utils-go/rest_errors"
 )
 
 func Get(c *gin.Context) {
