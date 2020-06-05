@@ -5,27 +5,26 @@ import (
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/sampado/bookstore_users-api/utils/errors"
+	"github.com/sampado/bookstore_utils-go/rest_errors"
 )
 
 const (
 	ErrorNoRows = "no rows in result set"
 )
 
-func ParseError(err error) *errors.RestError {
+func ParseError(err error) *rest_errors.RestError {
 	sqlErr, ok := err.(*mysql.MySQLError)
 	if !ok {
 		if strings.Contains(err.Error(), ErrorNoRows) {
-			return errors.NewNotFoundError("row not found ")
+			return rest_errors.NewNotFoundError("row not found ")
 		}
-		return errors.NewInternalServerError(
-			fmt.Sprintf("error when trying to cast error", err.Error()))
+		return rest_errors.NewInternalServerError("error when trying to cast error", err)
 	}
 
 	switch sqlErr.Number {
 	case 1062:
-		return errors.NewBadRequestError("invalid data")
+		return rest_errors.NewBadRequestError("invalid data")
 	}
 
-	return errors.NewInternalServerError(fmt.Sprintf("error processing request: %s", sqlErr.Error()))
+	return rest_errors.NewInternalServerError(fmt.Sprintf("error processing request: %s", sqlErr.Error()), err)
 }

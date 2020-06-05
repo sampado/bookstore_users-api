@@ -10,8 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sampado/bookstore_users-api/domain/users"
 	"github.com/sampado/bookstore_users-api/services"
-	"github.com/sampado/bookstore_users-api/utils/errors"
-	_ "github.com/sampado/bookstore_utils-go/rest_errors"
+	"github.com/sampado/bookstore_utils-go/rest_errors"
 )
 
 func Get(c *gin.Context) {
@@ -59,7 +58,7 @@ func Create(c *gin.Context) {
 	// gin framework way
 	// -------
 	if err := c.ShouldBindJSON(&user); err != nil {
-		error := errors.NewBadRequestError(err.Error())
+		error := rest_errors.NewBadRequestError(err.Error())
 		fmt.Println(error)
 		c.JSON(http.StatusBadRequest, error)
 		return
@@ -84,7 +83,7 @@ func Update(c *gin.Context) {
 
 	var user users.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		error := errors.NewBadRequestError("Invalid JSON body")
+		error := rest_errors.NewBadRequestError("Invalid JSON body")
 		c.JSON(http.StatusBadRequest, error)
 		return
 	}
@@ -132,10 +131,10 @@ func Search(c *gin.Context) {
 	c.JSON(http.StatusOK, users.Marshall(c.GetHeader("X-Public") == "true"))
 }
 
-func getUserID(userIdParam string) (int64, *errors.RestError) {
+func getUserID(userIdParam string) (int64, *rest_errors.RestError) {
 	userID, userErr := strconv.ParseInt(userIdParam, 10, 64)
 	if userErr != nil {
-		err := errors.NewBadRequestError(userErr.Error())
+		err := rest_errors.NewBadRequestError(userErr.Error())
 		return -1, err
 	}
 
@@ -145,7 +144,7 @@ func getUserID(userIdParam string) (int64, *errors.RestError) {
 func Login(c *gin.Context) {
 	var request users.LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		restErr := errors.NewBadRequestError(err.Error())
+		restErr := rest_errors.NewBadRequestError(err.Error())
 		c.JSON(restErr.Status, restErr)
 		return
 	}

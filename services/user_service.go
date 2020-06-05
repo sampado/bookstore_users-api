@@ -4,7 +4,7 @@ import (
 	"github.com/sampado/bookstore_users-api/domain/users"
 	cryptoutils "github.com/sampado/bookstore_users-api/utils/crypto_utils"
 	dateutils "github.com/sampado/bookstore_users-api/utils/date_utils"
-	"github.com/sampado/bookstore_users-api/utils/errors"
+	"github.com/sampado/bookstore_utils-go/rest_errors"
 )
 
 var (
@@ -15,16 +15,16 @@ type usersService struct {
 }
 
 type usersServiceInterface interface {
-	GetUser(int64) (*users.User, *errors.RestError)
-	CreateUser(users.User) (*users.User, *errors.RestError)
-	UpdateUser(bool, users.User) (*users.User, *errors.RestError)
-	DeleteUser(int64) *errors.RestError
-	FindUserByStatus(string) (users.Users, *errors.RestError)
-	LoginUser(users.LoginRequest) (*users.User, *errors.RestError)
+	GetUser(int64) (*users.User, *rest_errors.RestError)
+	CreateUser(users.User) (*users.User, *rest_errors.RestError)
+	UpdateUser(bool, users.User) (*users.User, *rest_errors.RestError)
+	DeleteUser(int64) *rest_errors.RestError
+	FindUserByStatus(string) (users.Users, *rest_errors.RestError)
+	LoginUser(users.LoginRequest) (*users.User, *rest_errors.RestError)
 }
 
 // GetUser is a service to get a user from the BBDD.
-func (s *usersService) GetUser(userID int64) (*users.User, *errors.RestError) {
+func (s *usersService) GetUser(userID int64) (*users.User, *rest_errors.RestError) {
 	user := &users.User{Id: userID}
 	err := user.Get()
 	if err != nil {
@@ -34,7 +34,7 @@ func (s *usersService) GetUser(userID int64) (*users.User, *errors.RestError) {
 }
 
 // CreateUser is a service to create a user and persist it into the BBDD.
-func (s *usersService) CreateUser(user users.User) (*users.User, *errors.RestError) {
+func (s *usersService) CreateUser(user users.User) (*users.User, *rest_errors.RestError) {
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (s *usersService) CreateUser(user users.User) (*users.User, *errors.RestErr
 }
 
 // UpdateUser used to update an user in the BBDD
-func (s *usersService) UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestError) {
+func (s *usersService) UpdateUser(isPartial bool, user users.User) (*users.User, *rest_errors.RestError) {
 	current, err := s.GetUser(user.Id)
 	if err != nil {
 		return nil, err
@@ -85,18 +85,18 @@ func (s *usersService) UpdateUser(isPartial bool, user users.User) (*users.User,
 }
 
 // DeleteUser is used to delete a given user
-func (s *usersService) DeleteUser(userID int64) *errors.RestError {
+func (s *usersService) DeleteUser(userID int64) *rest_errors.RestError {
 	user := &users.User{Id: userID}
 	return user.Delete()
 }
 
 // FindUserByStatus is used to find users
-func (s *usersService) FindUserByStatus(status string) (users.Users, *errors.RestError) {
+func (s *usersService) FindUserByStatus(status string) (users.Users, *rest_errors.RestError) {
 	dao := &users.User{}
 	return dao.FindByStatus(status)
 }
 
-func (s *usersService) LoginUser(request users.LoginRequest) (*users.User, *errors.RestError) {
+func (s *usersService) LoginUser(request users.LoginRequest) (*users.User, *rest_errors.RestError) {
 	dao := &users.User{
 		Email:    request.Email,
 		Password: cryptoutils.GetMd5(request.Password),
