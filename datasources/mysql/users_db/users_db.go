@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sampado/bookstore_users-api/logger"
-
 	// _ imports the package no matter if it's being used here
-	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/sampado/bookstore_utils-go/logger"
 )
 
 const (
@@ -47,6 +47,6 @@ func connect() {
 	if err = Client.Ping(); err != nil {
 		panic(err)
 	}
-
+	mysql.SetLogger(logger.GetLogger())
 	logger.Info("DB successfully configured")
 }

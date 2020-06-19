@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/sampado/bookstore_users-api/app"
-	"github.com/sampado/bookstore_users-api/logger"
+	"github.com/sampado/bookstore_utils-go/logger"
 )
 
 func main() {

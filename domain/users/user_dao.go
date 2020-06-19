@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sampado/bookstore_users-api/logger"
-
 	"github.com/sampado/bookstore_users-api/datasources/mysql/users_db"
 	mysqlutils "github.com/sampado/bookstore_users-api/utils/mysql"
+	"github.com/sampado/bookstore_utils-go/logger"
 	"github.com/sampado/bookstore_utils-go/rest_errors"
 )
 
